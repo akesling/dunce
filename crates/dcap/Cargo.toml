@@ -1,0 +1,23 @@
+[package]
+name = "dcap"
+version = "0.1.0"
+edition = "2024"
+authors = ["Alex Kesling <alex@kesling.co>"]
+license = "Apache-2.0"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+futures = { workspace = true }
+futures-util = { workspace = true }
+lazy_static = { workspace = true }
+log = { workspace = true }
+pin-project = "1.1"
+rand = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+simplelog = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
+uuid = { workspace = true }
