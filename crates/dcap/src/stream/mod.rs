@@ -14,7 +14,7 @@ pub type Result<T> = std::result::Result<T, anyhow::Error>;
 
 #[cfg(test)]
 mod tests {
-    use crate::stream::{MemoryStorage, StorageHandle, Inspector, Sink, Source};
+    use crate::stream::{Inspector, MemoryStorage, Sink, Source, StorageHandle};
     use futures::{StreamExt, stream};
     use serde::{Deserialize, Serialize};
 

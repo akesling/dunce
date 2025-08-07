@@ -1,8 +1,48 @@
+//! # dcap - Stream Capture and Replay Library
+//!
+//! Dunce CAP (dcap) is a library for capturing, storing, and replaying streams of data. It
+//! provides transparent monitoring capabilities and flexible storage backends for stream
+//! processing applications.
+//!
+//! ## Key Features
+//!
+//! - **Transparent Monitoring**: Use `Inspector` to capture stream data while allowing
+//!   normal stream processing to continue uninterrupted
+//! - **Flexible Storage**: Support for both in-memory and file-based persistence
+//! - **Multi-Channel Support**: Organize captured data into named channels
+//! - **Session Replay**: Replay data from multiple channels in the order it was captured
+//!
+//! ## Quick Start
+//!
+//! ```rust
+//! use dcap::{Inspector, Sink, Source};
+//! use dcap::stream::{StorageHandle, MemoryStorage};
+//! use futures::{StreamExt, stream};
+//!
+//! # #[tokio::main]
+//! # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! // Create storage
+//! let storage = StorageHandle::new(MemoryStorage::new());
+//!
+//! // Capture some data
+//! let data = vec![1, 2, 3, 4, 5];
+//! let data_stream = stream::iter(data.clone());
+//! let sink = Sink::new(storage.clone(), "numbers");
+//! sink.capture(data_stream).await?;
+//!
+//! // Replay the data
+//! let source = Source::new(storage, "numbers").unwrap();
+//! let replayed: Vec<i32> = source.map(|r| r.unwrap()).collect().await;
+//! assert_eq!(replayed, data);
+//! # Ok(())
+//! # }
+//! ```
+
 use anyhow::anyhow;
 
 pub mod stream;
 
-pub use stream::{Inspector, Sink, Source, SessionSource};
+pub use stream::{Inspector, SessionSource, Sink, Source};
 
 pub static HAIKUS: [[&str; 3]; 10] = [
     [
@@ -58,6 +98,20 @@ pub static HAIKUS: [[&str; 3]; 10] = [
 ];
 
 /// Print a random project-related haiku
+///
+/// This is a fun utility function that prints poetic descriptions of the
+/// library's purpose and behavior.
+///
+/// # Arguments
+/// * `print_all` - If true, prints all haikus. If false, prints one random haiku.
+///
+/// # Example
+/// ```
+/// use dcap::print_haiku;
+///
+/// // Print a single random haiku
+/// print_haiku(false).unwrap();
+/// ```
 pub fn print_haiku(print_all: bool) -> anyhow::Result<()> {
     use rand::seq::SliceRandom as _;
 

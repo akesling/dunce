@@ -1,8 +1,29 @@
+//! In-memory storage implementation
+
 use super::Storage;
 use crate::stream::{ChannelId, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// In-memory storage backend for captured stream data.
+///
+/// `MemoryStorage` stores all data in memory using standard Rust collections.
+/// This provides fast access but data is not persisted between program runs.
+/// It's ideal for temporary capture/replay scenarios and testing.
+///
+/// # Type Parameters
+/// * `T` - The item type being stored
+///
+/// # Example
+/// ```rust
+/// use dcap::stream::{StorageHandle, MemoryStorage};
+///
+/// // Create memory storage for integers
+/// let storage = StorageHandle::new(MemoryStorage::<i32>::new());
+///
+/// // Use with other dcap components
+/// // let sink = Sink::new(storage.clone(), "data");
+/// ```
 #[derive(Debug)]
 pub struct MemoryStorage<T> {
     channels: HashMap<ChannelId, Vec<T>>,
@@ -13,6 +34,14 @@ pub struct MemoryStorage<T> {
 }
 
 impl<T> MemoryStorage<T> {
+    /// Creates a new empty memory storage instance.
+    ///
+    /// # Example
+    /// ```rust
+    /// use dcap::stream::MemoryStorage;
+    ///
+    /// let storage = MemoryStorage::<String>::new();
+    /// ```
     pub fn new() -> Self {
         Self {
             channels: HashMap::new(),

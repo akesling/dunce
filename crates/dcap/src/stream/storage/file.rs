@@ -1,3 +1,5 @@
+//! File-based storage implementation
+
 use super::Storage;
 use crate::stream::{ChannelId, Result};
 use serde::{Deserialize, Serialize};
@@ -23,6 +25,24 @@ struct StoredItem<T> {
     item: T,
 }
 
+/// File-based storage backend for captured stream data.
+///
+/// `FileStorage` persists data to disk in JSON Lines format, allowing data to survive
+/// between program runs. It maintains an index for fast access while keeping the
+/// capture order intact for session replay.
+///
+/// # Type Parameters
+/// * `T` - The item type being stored, must be serializable
+///
+/// # Example
+/// ```rust
+/// use dcap::stream::{StorageHandle, FileStorage};
+///
+/// // Create file storage for new data
+/// let storage = FileStorage::<String>::create("example.jsonl").unwrap();
+/// let storage_handle = StorageHandle::new(storage);
+/// // Use storage_handle with Sink, Source, etc...
+/// ```
 #[derive(Debug)]
 pub struct FileStorage<T> {
     path: PathBuf,
