@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-pub struct StreamSource<T> {
+pub struct Source<T> {
     storage: StorageHandle<T>,
     channel: ChannelId,
     position: usize,
 }
 
-impl<T> StreamSource<T>
+impl<T> Source<T>
 where
     T: Serialize + for<'de> Deserialize<'de> + 'static,
 {
@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<T> Stream for StreamSource<T>
+impl<T> Stream for Source<T>
 where
     T: Serialize + for<'de> Deserialize<'de> + 'static,
 {

@@ -2,6 +2,8 @@ use anyhow::anyhow;
 
 pub mod stream;
 
+pub use stream::{Inspector, Sink, Source, SessionSource};
+
 pub static HAIKUS: [[&str; 3]; 10] = [
     [
         "Wires whisper slowly,",
@@ -119,14 +121,14 @@ mod tests {
         ];
 
         let packet_stream = stream::iter(packets.clone());
-        let sink = StreamSink::new(storage.clone(), "network");
+        let sink = Sink::new(storage.clone(), "network");
         let captured_count = sink.capture(packet_stream).await.unwrap();
 
         assert_eq!(captured_count, 2);
         assert_eq!(storage.len(), 2);
         assert!(!storage.is_empty());
 
-        let source = StreamSource::new(storage.clone(), "network").unwrap();
+        let source = Source::new(storage.clone(), "network").unwrap();
         let replayed: Vec<_> = source.map(|result| result.unwrap()).collect().await;
 
         assert_eq!(replayed, packets);
@@ -148,7 +150,7 @@ mod tests {
                 message: "Sending request".to_string(),
             },
         ];
-        let client_sink = StreamSink::new(storage.clone(), "client");
+        let client_sink = Sink::new(storage.clone(), "client");
         client_sink
             .capture(stream::iter(client_msgs.clone()))
             .await
@@ -166,7 +168,7 @@ mod tests {
                 message: "Processing request".to_string(),
             },
         ];
-        let server_sink = StreamSink::new(storage.clone(), "server");
+        let server_sink = Sink::new(storage.clone(), "server");
         server_sink
             .capture(stream::iter(server_msgs.clone()))
             .await
@@ -182,13 +184,13 @@ mod tests {
             2
         );
 
-        let client_replayed: Vec<_> = StreamSource::new(storage.clone(), "client")
+        let client_replayed: Vec<_> = Source::new(storage.clone(), "client")
             .unwrap()
             .map(|result| result.unwrap())
             .collect()
             .await;
         assert_eq!(client_msgs, client_replayed);
-        let server_replayed: Vec<_> = StreamSource::new(storage.clone(), "server")
+        let server_replayed: Vec<_> = Source::new(storage.clone(), "server")
             .unwrap()
             .map(|result| result.unwrap())
             .collect()
@@ -205,7 +207,7 @@ mod tests {
         let data_stream = stream::iter(data.clone());
 
         // Create inspector that captures while passing through
-        let inspector = StreamInspector::new(data_stream, storage.clone(), "monitor");
+        let inspector = Inspector::new(data_stream, storage.clone(), "monitor");
 
         // Process the stream normally
         let processed_data: Vec<_> = inspector.collect().await;
@@ -220,7 +222,7 @@ mod tests {
         );
 
         // Verify captured data matches
-        let captured_source = StreamSource::new(storage, "monitor").unwrap();
+        let captured_source = Source::new(storage, "monitor").unwrap();
         let captured_data: Vec<_> = captured_source.map(|r| r.unwrap()).collect().await;
         assert_eq!(captured_data, data);
     }
@@ -242,7 +244,7 @@ mod tests {
         // Capture to file
         {
             let storage = StorageHandle::new(FileStorage::create(&temp_file).unwrap());
-            let sink = StreamSink::new(storage.clone(), "messages");
+            let sink = Sink::new(storage.clone(), "messages");
             sink.capture(stream::iter(messages.clone())).await.unwrap();
 
             assert_eq!(storage.len(), 3);
@@ -257,7 +259,7 @@ mod tests {
             // Check if channel exists
             assert!(storage.channel_id("messages").is_some());
 
-            let source = StreamSource::new(storage, "messages").unwrap();
+            let source = Source::new(storage, "messages").unwrap();
             let loaded_messages: Vec<String> = source.map(|r| r.unwrap()).collect().await;
 
             assert_eq!(loaded_messages, messages);
@@ -282,7 +284,7 @@ mod tests {
         ];
 
         let result_stream = stream::iter(results);
-        let sink = StreamSink::new(storage.clone(), "mixed");
+        let sink = Sink::new(storage.clone(), "mixed");
         let (success_count, error_count) = sink.capture_with_errors(result_stream).await.unwrap();
 
         assert_eq!(success_count, 3);
@@ -290,7 +292,7 @@ mod tests {
         assert_eq!(storage.channel_len(storage.channel_id("mixed").unwrap()), 3);
 
         // Verify only successful items were stored
-        let source = StreamSource::new(storage, "mixed").unwrap();
+        let source = Source::new(storage, "mixed").unwrap();
         let stored_items: Vec<_> = source.map(|r| r.unwrap()).collect().await;
 
         assert_eq!(
@@ -344,12 +346,12 @@ mod tests {
             },
         ];
 
-        let sink = StreamSink::new(storage.clone(), "sensors");
+        let sink = Sink::new(storage.clone(), "sensors");
         sink.capture(stream::iter(complex_events.clone()))
             .await
             .unwrap();
 
-        let source = StreamSource::new(storage, "sensors").unwrap();
+        let source = Source::new(storage, "sensors").unwrap();
         let replayed_events: Vec<_> = source.map(|r| r.unwrap()).collect().await;
 
         assert_eq!(replayed_events, complex_events);
@@ -366,10 +368,10 @@ mod tests {
         assert_eq!(storage.channels().len(), 0);
 
         // Add some data to different channels (same type)
-        let sink1 = StreamSink::new(storage.clone(), "channel1");
+        let sink1 = Sink::new(storage.clone(), "channel1");
         sink1.capture(stream::iter(vec![1, 2, 3])).await.unwrap();
 
-        let sink2 = StreamSink::new(storage.clone(), "channel2");
+        let sink2 = Sink::new(storage.clone(), "channel2");
         sink2.capture(stream::iter(vec![10, 20])).await.unwrap();
 
         // Test metadata after data
@@ -447,8 +449,8 @@ mod tests {
         let server_id = server_stream.id();
 
         // Create inspectors that capture as streams naturally provide data
-        let client_inspector = StreamInspector::new(client_stream, storage.clone(), "client");
-        let server_inspector = StreamInspector::new(server_stream, storage.clone(), "server");
+        let client_inspector = Inspector::new(client_stream, storage.clone(), "client");
+        let server_inspector = Inspector::new(server_stream, storage.clone(), "server");
 
         // Define the interleaving sequence using the channel IDs
         let sequence = stream::iter(vec![
@@ -525,11 +527,11 @@ mod tests {
         assert_eq!(actual_messages, expected_messages);
 
         // Verify individual channel replay maintains original order within each channel
-        let client_source = StreamSource::new(storage.clone(), "client").unwrap();
+        let client_source = Source::new(storage.clone(), "client").unwrap();
         let replayed_client: Vec<_> = client_source.map(|r| r.unwrap()).collect().await;
         assert_eq!(replayed_client, client_msgs);
 
-        let server_source = StreamSource::new(storage, "server").unwrap();
+        let server_source = Source::new(storage, "server").unwrap();
         let replayed_server: Vec<_> = server_source.map(|r| r.unwrap()).collect().await;
         assert_eq!(replayed_server, server_msgs);
     }

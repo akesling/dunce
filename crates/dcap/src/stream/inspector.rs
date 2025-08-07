@@ -7,14 +7,14 @@ use std::task::{Context, Poll};
 
 #[pin_project]
 #[derive(Debug, Clone)]
-pub struct StreamInspector<S, T> {
+pub struct Inspector<S, T> {
     #[pin]
     inner: S,
     storage: StorageHandle<T>,
     channel: ChannelId,
 }
 
-impl<S, T> StreamInspector<S, T>
+impl<S, T> Inspector<S, T>
 where
     S: Stream<Item = T>,
     T: Serialize + for<'de> Deserialize<'de> + Clone + 'static,
@@ -37,7 +37,7 @@ where
     }
 }
 
-impl<S, T> Stream for StreamInspector<S, T>
+impl<S, T> Stream for Inspector<S, T>
 where
     S: Stream<Item = T>,
     T: Serialize + for<'de> Deserialize<'de> + Clone + 'static,
@@ -60,7 +60,7 @@ where
 
 #[pin_project]
 #[derive(Debug, Clone)]
-pub struct StreamInspectorWithResults<S, T, E> {
+pub struct InspectorWithResults<S, T, E> {
     #[pin]
     inner: S,
     storage: StorageHandle<T>,
@@ -68,7 +68,7 @@ pub struct StreamInspectorWithResults<S, T, E> {
     _error: std::marker::PhantomData<E>,
 }
 
-impl<S, T, E> StreamInspectorWithResults<S, T, E>
+impl<S, T, E> InspectorWithResults<S, T, E>
 where
     S: Stream<Item = Result<T, E>>,
     T: Serialize + for<'de> Deserialize<'de> + Clone + 'static,
@@ -85,7 +85,7 @@ where
     }
 }
 
-impl<S, T, E> Stream for StreamInspectorWithResults<S, T, E>
+impl<S, T, E> Stream for InspectorWithResults<S, T, E>
 where
     S: Stream<Item = Result<T, E>>,
     T: Serialize + for<'de> Deserialize<'de> + Clone + 'static,

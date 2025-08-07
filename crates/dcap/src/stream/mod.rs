@@ -4,9 +4,9 @@ pub mod source;
 pub mod storage;
 pub mod testing;
 
-pub use inspector::StreamInspector;
-pub use sink::StreamSink;
-pub use source::{SessionSource, StreamSource};
+pub use inspector::{Inspector, InspectorWithResults};
+pub use sink::Sink;
+pub use source::{SessionSource, Source};
 pub use storage::{FileStorage, MemoryStorage, Storage, StorageHandle};
 
 pub type ChannelId = usize;
@@ -14,7 +14,7 @@ pub type Result<T> = std::result::Result<T, anyhow::Error>;
 
 #[cfg(test)]
 mod tests {
-    use crate::stream::{MemoryStorage, StorageHandle, StreamInspector, StreamSink, StreamSource};
+    use crate::stream::{MemoryStorage, StorageHandle, Inspector, Sink, Source};
     use futures::{StreamExt, stream};
     use serde::{Deserialize, Serialize};
 
@@ -44,11 +44,11 @@ mod tests {
         ];
 
         let data_stream = stream::iter(test_data.clone());
-        let sink = StreamSink::new(storage.clone(), "test_channel");
+        let sink = Sink::new(storage.clone(), "test_channel");
         let count = sink.capture(data_stream).await.unwrap();
         println!("Captured {} items", count);
 
-        let source = StreamSource::new(storage, "test_channel").unwrap();
+        let source = Source::new(storage, "test_channel").unwrap();
         let mut results = Vec::new();
 
         let mut source = Box::pin(source);
@@ -66,7 +66,7 @@ mod tests {
         let data = vec![1, 2, 3, 4, 5];
         let data_stream = stream::iter(data.clone());
 
-        let inspector = StreamInspector::new(data_stream, storage.clone(), "numbers");
+        let inspector = Inspector::new(data_stream, storage.clone(), "numbers");
 
         let mut results = Vec::new();
         let mut inspector = Box::pin(inspector);

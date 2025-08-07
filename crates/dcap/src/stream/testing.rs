@@ -289,8 +289,8 @@ mod test {
         let server_id = server_stream.id();
 
         // Create inspectors that capture as streams naturally provide data
-        let client_inspector = StreamInspector::new(client_stream, storage.clone(), "client");
-        let server_inspector = StreamInspector::new(server_stream, storage.clone(), "server");
+        let client_inspector = crate::stream::Inspector::new(client_stream, storage.clone(), "client");
+        let server_inspector = crate::stream::Inspector::new(server_stream, storage.clone(), "server");
 
         // Define the interleaving sequence using the channel IDs
         let sequence = stream::iter(vec![

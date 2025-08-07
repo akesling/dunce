@@ -3,12 +3,12 @@ use futures::{Stream, StreamExt, pin_mut};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
-pub struct StreamSink<T> {
+pub struct Sink<T> {
     storage: StorageHandle<T>,
     channel: ChannelId,
 }
 
-impl<T> StreamSink<T>
+impl<T> Sink<T>
 where
     T: Serialize + for<'de> Deserialize<'de> + 'static,
 {
